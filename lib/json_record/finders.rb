@@ -22,7 +22,12 @@ module JsonRecord
       end
 
       def all
+        enum_for(:all) unless block_given?
         Dir.glob["#{folder_name}/*#{JsonRecord.files_ext}"].map { |f| instantiate_from_file(f) }
+      end
+
+      def where(conditions)
+        Predicate.new(self).where(conditions)
       end
 
       private

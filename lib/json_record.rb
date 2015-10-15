@@ -9,6 +9,7 @@ require 'json_record/attributes'
 require 'json_record/serializable'
 require 'json_record/persistence'
 require 'json_record/finders'
+require 'json_record/finders/predicate'
 require 'json_record/model'
 
 module JsonRecord

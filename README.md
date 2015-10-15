@@ -1,35 +1,96 @@
 # JsonRecord
 
-Написать гем. Реализовать свой ActiveRocord или ActiveModel так, если бы в Rails он бы не был реализован. В качестве хранилища данных использовать файловую систему. Формат сериализации данных на усмотрение разработчика.
-Реализация всех особенностей и фич ActiveRocord не требуется, нужно выбрать только основу, и несколько показательно сложных моментов для демонстрации навыков.
+One more code sample.
+
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'json_record'
+gem 'json_record', github: 'solenko/json_record'
 ```
 
 And then execute:
 
     $ bundle
 
-Or install it yourself as:
+## Configuration
 
-    $ gem install json_record
+```ruby
+
+JsonRecord.configure do |config|
+  # path to directory where your data will be stored. Default './db'
+  config.storage_path = '/some/absolute/path'
+  # Write keys with null values into json files or not. Default `true`
+  config.write_empty_keys = true
+  # File extension for data files. Default '.json'
+  config.files_ext = '.my_json_db'
+end
+```
 
 ## Usage
 
-TODO: Write usage instructions here
 
-## Development
+#### Define model and attributes
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake rspec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+```ruby
+class Person
+  include JsonRecord
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and tags, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+  attribute :first_name
+  attribute :last_name
+  attribute :phone
+end
 
-## Contributing
+#### Works with objects
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/json_record.
+person  = Person.new(first_name: 'John', last_name: 'Doe')
+person.first_name
+# => 'John'
+person.last_name
+# => 'Dou'
+person.attributes
+# => {"first_name" => "John", "last_name" => "Doe", "phone" => nil}
+person['phone'] = 'unknown'
+person.phone
+# => "unknown"
 
+
+#### Persisting objects
+
+JsonRecord use UUID's for record_id/primary key by default, but you can override `primary_key` method to change this.
+
+person  = Person.new(first_name: 'John', last_name: 'Doe')
+person.primary_key
+# => nil
+person.persisted?
+# => false
+
+person.save
+
+person.primary_key
+# => '62936e70-1815-439b-bf89-8492855a7e6b'
+person.persisted?
+# => true
+
+person_copy = Person.find('62936e70-1815-439b-bf89-8492855a7e6b')
+person_copy.attributes
+# => {"first_name" => "John", "last_name" => "Doe", "phone" => nil}
+```
+
+#### Filtering
+
+```ruby
+# by field values
+Person.where(first_name: 'John', last_name: 'Doe')
+
+# by field using callable object
+Person.where(first_name: ->(name) { name.starts_with? 'J' })
+
+# using callable object for record
+Person.where(->(record) { record.name.starts_with? 'J' })
+
+# #where calls are chainable
+Person.where(first_name: 'John').where(last_name: 'Doe')
+```
